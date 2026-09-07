@@ -786,9 +786,9 @@ setSearchResult({
 
         </div>
 
-        <button className="cta-btn">
-          Start Booking →
-        </button>
+        <Link to="/booking" className="cta-btn">
+  Start Booking →
+</Link>
 
       </section>
 
