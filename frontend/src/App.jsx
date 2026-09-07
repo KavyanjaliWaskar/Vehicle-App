@@ -2,19 +2,58 @@ import "./App.css";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Login from "./Login";
 import Booking from "./Booking";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 function Home() {
-  const [vehicles, setVehicles] = useState([]);
-
-  useEffect(() => {
-    fetch("http://localhost:5000/api/vehicles")
-      .then((response) => response.json())
-      .then((data) => {
-  console.log("VEHICLE DATA:", data);
-  setVehicles(data);
-})
-      .catch((error) => console.error("Error:", error));
-  }, []);
+  const [vehicles, setVehicles] = useState([
+  {
+    name: "Honda Activa 125",
+    type: "Bike",
+    seats: 1,
+    fuel: "Petrol",
+    price: "₹8/km",
+    price_per_km: 8
+  },
+  {
+    name: "Bajaj RE Auto",
+    type: "Auto",
+    seats: 2,
+    fuel: "CNG",
+    price: "₹10/km",
+    price_per_km: 10
+  },
+  {
+    name: "Maruti Suzuki Swift",
+    type: "Car",
+    seats: 3,
+    fuel: "Petrol",
+    price: "₹14/km",
+    price_per_km: 14
+  },
+  {
+    name: "Hyundai Aura",
+    type: "Cab",
+    seats: 3,
+    fuel: "Petrol",
+    price: "₹16/km",
+    price_per_km: 16
+  },
+  {
+    name: "Hyundai Creta",
+    type: "SUV",
+    seats: 5,
+    fuel: "Petrol",
+    price: "₹20/km",
+    price_per_km: 20
+  },
+  {
+    name: "Toyota Innova HyCross",
+    type: "Luxury",
+    seats: 6,
+    fuel: "Hybrid",
+    price: "₹25/km",
+    price_per_km: 25
+  }
+]);
   const [pickup, setPickup] = useState("");
 const [drop, setDrop] = useState("");
 const [pickupDate, setPickupDate] = useState("");
@@ -500,9 +539,16 @@ setSearchResult({
             </p>
           </div>
 
-          <button className="view-all-btn">
-            View All Vehicles →
-          </button>
+          <button
+  className="view-all-btn"
+  onClick={() => {
+    document.getElementById("vehicles")?.scrollIntoView({
+      behavior: "smooth"
+    });
+  }}
+>
+  View All Vehicles →
+</button>
 
         </div>
 
