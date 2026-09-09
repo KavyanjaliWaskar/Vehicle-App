@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./Booking.css";
 
 function Booking() {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const selectedVehicle = location?.state?.vehicle;
 
   const [pickup, setPickup] = useState("");
@@ -23,20 +25,25 @@ function Booking() {
   // ===============================
   // CALCULATE DISTANCE
   // ===============================
+
   useEffect(() => {
     const calculateDistance = async () => {
+
       if (!pickup || !drop || pickup === drop) {
         setDistance("");
         return;
       }
 
-      // Avoid sending very short/partial locations
-      if (pickup.trim().length < 3 || drop.trim().length < 3) {
+      if (
+        pickup.trim().length < 3 ||
+        drop.trim().length < 3
+      ) {
         setDistance("");
         return;
       }
 
       try {
+
         setCalculatingDistance(true);
 
         const response = await fetch(
@@ -51,23 +58,33 @@ function Booking() {
           setDistance(data.distanceKm);
         } else {
           setDistance("");
-          console.log("Distance error:", data.message);
+          console.log(
+            "Distance error:",
+            data.message
+          );
         }
 
       } catch (error) {
-        console.error("Distance calculation error:", error);
+
+        console.error(
+          "Distance calculation error:",
+          error
+        );
+
         setDistance("");
 
       } finally {
+
         setCalculatingDistance(false);
+
       }
     };
 
 
-    // Wait until user stops typing
     const timer = setTimeout(() => {
       calculateDistance();
     }, 1000);
+
 
     return () => clearTimeout(timer);
 
@@ -77,6 +94,7 @@ function Booking() {
   // ===============================
   // DEFAULT VEHICLE
   // ===============================
+
   const vehicle = selectedVehicle || {
     name: "Toyota Innova",
     icon: "🚐",
@@ -90,19 +108,50 @@ function Booking() {
   // ===============================
   // TOTAL FARE
   // ===============================
+
   const totalAmount = distance
-    ? Number((Number(distance) * Number(vehicle.price_per_km)).toFixed(2))
+    ? Number(
+        (
+          Number(distance) *
+          Number(vehicle.price_per_km)
+        ).toFixed(2)
+      )
     : 0;
 
 
   // ===============================
   // CONFIRM BOOKING
   // ===============================
+
   const handleBooking = async (e) => {
+
     e.preventDefault();
 
 
-    // Check details
+    // ===============================
+    // CHECK LOGIN
+    // ===============================
+
+    const userId =
+      localStorage.getItem("userId");
+
+
+    if (!userId) {
+
+      alert(
+        "Please login first to continue booking."
+      );
+
+      navigate("/login");
+
+      return;
+    }
+
+
+    // ===============================
+    // CHECK DETAILS
+    // ===============================
+
     if (
       !pickup ||
       !drop ||
@@ -110,63 +159,116 @@ function Booking() {
       !returnDate ||
       !distance
     ) {
-      alert("Please fill all booking details.");
+
+      alert(
+        "Please fill all booking details."
+      );
+
       return;
     }
 
 
-    // Pickup and drop cannot be same
+    // ===============================
+    // PICKUP / DROP VALIDATION
+    // ===============================
+
     if (
       pickup.trim().toLowerCase() ===
       drop.trim().toLowerCase()
     ) {
-      alert("Pick-up and Drop location cannot be same.");
+
+      alert(
+        "Pick-up and Drop location cannot be same."
+      );
+
       return;
     }
 
 
-    // Date validation
+    // ===============================
+    // DATE VALIDATION
+    // ===============================
+
     if (returnDate < pickupDate) {
-      alert("Return date cannot be before pick-up date.");
+
+      alert(
+        "Return date cannot be before pick-up date."
+      );
+
       return;
     }
 
 
-    // Distance validation
+    // ===============================
+    // DISTANCE VALIDATION
+    // ===============================
+
     if (Number(distance) <= 0) {
-      alert("Please enter valid locations.");
+
+      alert(
+        "Please enter valid locations."
+      );
+
       return;
     }
 
 
     try {
+
       setSavingBooking(true);
 
 
-      // Generate 6 digit OTP
-      const newBookingOtp = Math.floor(
-        100000 + Math.random() * 900000
-      ).toString();
+      // ===============================
+      // GENERATE BOOKING OTP
+      // ===============================
+
+      const newBookingOtp =
+        Math.floor(
+          100000 +
+          Math.random() * 900000
+        ).toString();
 
 
-      // Booking data
+      // ===============================
+      // BOOKING DATA
+      // ===============================
+
       const bookingData = {
+
+        userId: Number(userId),
+
         pickup: pickup,
+
         drop: drop,
+
         pickupDate: pickupDate,
+
         returnDate: returnDate,
+
         distance: Number(distance),
+
         vehicleName: vehicle.name,
-        pricePerKm: Number(vehicle.price_per_km),
-        totalFare: Number(totalAmount),
+
+        pricePerKm:
+          Number(vehicle.price_per_km),
+
+        totalFare:
+          Number(totalAmount),
+
         bookingOtp: newBookingOtp,
       };
 
 
-      console.log("Booking data:", bookingData);
+      console.log(
+        "Booking data:",
+        bookingData
+      );
 
 
-      // Send booking to backend
+      // ===============================
+      // SEND BOOKING TO BACKEND
+      // ===============================
+
       const response = await fetch(
         "https://vehicle-app-1-9q1x.onrender.com/api/bookings",
         {
@@ -176,17 +278,27 @@ function Booking() {
             "Content-Type": "application/json",
           },
 
-          body: JSON.stringify(bookingData),
+          body: JSON.stringify(
+            bookingData
+          ),
         }
       );
 
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
 
-      // Backend error
+      // ===============================
+      // BACKEND ERROR
+      // ===============================
+
       if (!response.ok) {
-        console.error("Booking save error:", data);
+
+        console.error(
+          "Booking save error:",
+          data
+        );
 
         alert(
           data.message ||
@@ -197,33 +309,57 @@ function Booking() {
       }
 
 
-      // Booking successfully saved
-      console.log("Booking saved:", data);
+      // ===============================
+      // BOOKING SUCCESS
+      // ===============================
+
+      console.log(
+        "Booking saved:",
+        data
+      );
 
 
-      setBookingOtp(newBookingOtp);
-      setBookingId(data.bookingId);
-      setBookingConfirmed(true);
+      setBookingOtp(
+        newBookingOtp
+      );
+
+      setBookingId(
+        data.bookingId
+      );
+
+      setBookingConfirmed(
+        true
+      );
+
 
     } catch (error) {
 
-      console.error("Booking error:", error);
+      console.error(
+        "Booking error:",
+        error
+      );
 
       alert(
         "Unable to save booking. Please check your internet connection and try again."
       );
 
     } finally {
+
       setSavingBooking(false);
+
     }
+
   };
 
 
   // ===============================
   // BOOKING SUCCESS SCREEN
   // ===============================
+
   if (bookingConfirmed) {
+
     return (
+
       <div className="booking-page">
 
         <div className="booking-success">
@@ -245,7 +381,10 @@ function Booking() {
 
           {bookingId && (
             <p>
-              <strong>Booking ID:</strong> #{bookingId}
+              <strong>
+                Booking ID:
+              </strong>{" "}
+              #{bookingId}
             </p>
           )}
 
@@ -270,33 +409,60 @@ function Booking() {
           <div className="booking-summary">
 
             <p>
-              <strong>Pick-up:</strong> {pickup}
+              <strong>
+                Pick-up:
+              </strong>{" "}
+              {pickup}
             </p>
 
-            <p>
-              <strong>Drop:</strong> {drop}
-            </p>
 
             <p>
-              <strong>Pick-up Date:</strong> {pickupDate}
+              <strong>
+                Drop:
+              </strong>{" "}
+              {drop}
             </p>
 
-            <p>
-              <strong>Return Date:</strong> {returnDate}
-            </p>
 
             <p>
-              <strong>Distance:</strong> {distance} km
+              <strong>
+                Pick-up Date:
+              </strong>{" "}
+              {pickupDate}
             </p>
 
-            <p>
-              <strong>Vehicle:</strong> {vehicle.name}
-            </p>
 
             <p>
-              <strong>Rate:</strong> ₹
-              {vehicle.price_per_km}/km
+              <strong>
+                Return Date:
+              </strong>{" "}
+              {returnDate}
             </p>
+
+
+            <p>
+              <strong>
+                Distance:
+              </strong>{" "}
+              {distance} km
+            </p>
+
+
+            <p>
+              <strong>
+                Vehicle:
+              </strong>{" "}
+              {vehicle.name}
+            </p>
+
+
+            <p>
+              <strong>
+                Rate:
+              </strong>{" "}
+              ₹{vehicle.price_per_km}/km
+            </p>
+
 
             <p className="total-price">
               Total Fare: ₹{totalAmount}
@@ -317,22 +483,24 @@ function Booking() {
         </div>
 
       </div>
+
     );
+
   }
 
 
   // ===============================
   // BOOKING FORM
   // ===============================
+
   return (
+
     <div className="booking-page">
 
       <div className="booking-container">
 
 
-        {/* ===============================
-            SELECTED VEHICLE
-        =============================== */}
+        {/* SELECTED VEHICLE */}
 
         <div className="selected-vehicle">
 
@@ -340,14 +508,17 @@ function Booking() {
             {vehicle.icon}
           </div>
 
+
           <div>
 
             <h2>
               {vehicle.name}
             </h2>
 
+
             <p>
-              {vehicle.seats} Seats • {vehicle.fuel} • ₹
+              {vehicle.seats} Seats •{" "}
+              {vehicle.fuel} • ₹
               {vehicle.price_per_km}/km
             </p>
 
@@ -356,9 +527,7 @@ function Booking() {
         </div>
 
 
-        {/* ===============================
-            BOOKING CARD
-        =============================== */}
+        {/* BOOKING CARD */}
 
         <div className="booking-card">
 
@@ -366,12 +535,15 @@ function Booking() {
             Complete Your Booking
           </h1>
 
+
           <p>
             Enter your journey details to continue.
           </p>
 
 
-          <form onSubmit={handleBooking}>
+          <form
+            onSubmit={handleBooking}
+          >
 
 
             {/* PICKUP + DROP */}
@@ -384,12 +556,15 @@ function Booking() {
                   Pick-up Location
                 </label>
 
+
                 <input
                   type="text"
                   placeholder="e.g. Kolhapur, Maharashtra"
                   value={pickup}
                   onChange={(e) =>
-                    setPickup(e.target.value)
+                    setPickup(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -402,12 +577,15 @@ function Booking() {
                   Drop Location
                 </label>
 
+
                 <input
                   type="text"
                   placeholder="e.g. Goa, India"
                   value={drop}
                   onChange={(e) =>
-                    setDrop(e.target.value)
+                    setDrop(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -426,11 +604,14 @@ function Booking() {
                   Pick-up Date
                 </label>
 
+
                 <input
                   type="date"
                   value={pickupDate}
                   onChange={(e) =>
-                    setPickupDate(e.target.value)
+                    setPickupDate(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -443,11 +624,14 @@ function Booking() {
                   Return Date
                 </label>
 
+
                 <input
                   type="date"
                   value={returnDate}
                   onChange={(e) =>
-                    setReturnDate(e.target.value)
+                    setReturnDate(
+                      e.target.value
+                    )
                   }
                 />
 
@@ -463,6 +647,7 @@ function Booking() {
               <label>
                 Distance (KM)
               </label>
+
 
               <input
                 type="text"
@@ -503,7 +688,10 @@ function Booking() {
                 </span>
 
                 <strong>
-                  {distance ? distance : 0} km
+                  {distance
+                    ? distance
+                    : 0}{" "}
+                  km
                 </strong>
 
               </div>
@@ -529,7 +717,10 @@ function Booking() {
             <button
               type="submit"
               className="confirm-booking-btn"
-              disabled={savingBooking || calculatingDistance}
+              disabled={
+                savingBooking ||
+                calculatingDistance
+              }
             >
 
               {savingBooking
@@ -540,6 +731,7 @@ function Booking() {
 
             </button>
 
+
           </form>
 
         </div>
@@ -547,6 +739,7 @@ function Booking() {
       </div>
 
     </div>
+
   );
 }
 
