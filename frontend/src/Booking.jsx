@@ -21,7 +21,7 @@ function Booking() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/api/distance?pickup=${encodeURIComponent(
+        ``https://vehicle-app-1-9q1x.onrender.com/api/distance?pickup=${encodeURIComponent(
           pickup
         )}&drop=${encodeURIComponent(drop)}`
       );
