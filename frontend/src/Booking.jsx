@@ -3,108 +3,272 @@ import { useLocation } from "react-router-dom";
 import "./Booking.css";
 
 function Booking() {
-    const location = useLocation();
-    const selectedVehicle = location.state?.vehicle;
+  const location = useLocation();
+  const selectedVehicle = location?.state?.vehicle;
+
   const [pickup, setPickup] = useState("");
   const [drop, setDrop] = useState("");
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [distance, setDistance] = useState("");
+
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [bookingOtp, setBookingOtp] = useState("");
+  const [bookingId, setBookingId] = useState("");
+
+  const [calculatingDistance, setCalculatingDistance] = useState(false);
+  const [savingBooking, setSavingBooking] = useState(false);
+
+
+  // ===============================
+  // CALCULATE DISTANCE
+  // ===============================
   useEffect(() => {
-  const calculateDistance = async () => {
-    if (!pickup || !drop || pickup === drop) {
-      setDistance("");
-      return;
-    }
-
-    try {
-  const response = await fetch(
-    `https://vehicle-app-1-9q1x.onrender.com/api/distance?pickup=${encodeURIComponent(
-      pickup
-    )}&drop=${encodeURIComponent(drop)}`
-  );
-
-  const data = await response.json();
-
-      
-
-      if (response.ok) {
-        setDistance(data.distanceKm);
-      } else {
+    const calculateDistance = async () => {
+      if (!pickup || !drop || pickup === drop) {
         setDistance("");
+        return;
       }
-    } catch (error) {
-      console.error("Distance calculation error:", error);
-      setDistance("");
-    }
+
+      // Avoid sending very short/partial locations
+      if (pickup.trim().length < 3 || drop.trim().length < 3) {
+        setDistance("");
+        return;
+      }
+
+      try {
+        setCalculatingDistance(true);
+
+        const response = await fetch(
+          `https://vehicle-app-1-9q1x.onrender.com/api/distance?pickup=${encodeURIComponent(
+            pickup
+          )}&drop=${encodeURIComponent(drop)}`
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setDistance(data.distanceKm);
+        } else {
+          setDistance("");
+          console.log("Distance error:", data.message);
+        }
+
+      } catch (error) {
+        console.error("Distance calculation error:", error);
+        setDistance("");
+
+      } finally {
+        setCalculatingDistance(false);
+      }
+    };
+
+
+    // Wait until user stops typing
+    const timer = setTimeout(() => {
+      calculateDistance();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+
+  }, [pickup, drop]);
+
+
+  // ===============================
+  // DEFAULT VEHICLE
+  // ===============================
+  const vehicle = selectedVehicle || {
+    name: "Toyota Innova",
+    icon: "🚐",
+    price_per_km: 22,
+    price: 22,
+    seats: 6,
+    fuel: "Diesel",
   };
 
-  calculateDistance();
-}, [pickup, drop]);
 
-  const vehicle = selectedVehicle || {
-  name: "Toyota Innova",
-  icon: "🚐",
-  price_per_km: 22,
-  seats: 6,
-  fuel: "Diesel",
-};
-
+  // ===============================
+  // TOTAL FARE
+  // ===============================
   const totalAmount = distance
-  ? Number(distance) * Number(vehicle.price_per_km)
-  : 0;
-  const handleBooking = (e) => {
+    ? Number((Number(distance) * Number(vehicle.price_per_km)).toFixed(2))
+    : 0;
+
+
+  // ===============================
+  // CONFIRM BOOKING
+  // ===============================
+  const handleBooking = async (e) => {
     e.preventDefault();
 
-    if (!pickup || !drop || !pickupDate || !returnDate || !distance) {
-      alert("Please fill all booking details");
+
+    // Check details
+    if (
+      !pickup ||
+      !drop ||
+      !pickupDate ||
+      !returnDate ||
+      !distance
+    ) {
+      alert("Please fill all booking details.");
       return;
     }
 
-    if (pickup === drop) {
-      alert("Pick-up and Drop location cannot be same");
+
+    // Pickup and drop cannot be same
+    if (
+      pickup.trim().toLowerCase() ===
+      drop.trim().toLowerCase()
+    ) {
+      alert("Pick-up and Drop location cannot be same.");
       return;
     }
+
+
+    // Date validation
     if (returnDate < pickupDate) {
-  alert("Return date cannot be before pick-up date.");
-  return;
-}
-
-    if (Number(distance) <= 0) {
-      alert("Please enter valid distance");
+      alert("Return date cannot be before pick-up date.");
       return;
     }
-    const newBookingOtp = Math.floor(
-  100000 + Math.random() * 900000
-).toString();
 
-setBookingOtp(newBookingOtp);
 
-setBookingConfirmed(true);
+    // Distance validation
+    if (Number(distance) <= 0) {
+      alert("Please enter valid locations.");
+      return;
+    }
 
+
+    try {
+      setSavingBooking(true);
+
+
+      // Generate 6 digit OTP
+      const newBookingOtp = Math.floor(
+        100000 + Math.random() * 900000
+      ).toString();
+
+
+      // Booking data
+      const bookingData = {
+        pickup: pickup,
+        drop: drop,
+        pickupDate: pickupDate,
+        returnDate: returnDate,
+        distance: Number(distance),
+        vehicleName: vehicle.name,
+        pricePerKm: Number(vehicle.price_per_km),
+        totalFare: Number(totalAmount),
+        bookingOtp: newBookingOtp,
+      };
+
+
+      console.log("Booking data:", bookingData);
+
+
+      // Send booking to backend
+      const response = await fetch(
+        "https://vehicle-app-1-9q1x.onrender.com/api/bookings",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(bookingData),
+        }
+      );
+
+
+      const data = await response.json();
+
+
+      // Backend error
+      if (!response.ok) {
+        console.error("Booking save error:", data);
+
+        alert(
+          data.message ||
+          "Booking could not be saved. Please try again."
+        );
+
+        return;
+      }
+
+
+      // Booking successfully saved
+      console.log("Booking saved:", data);
+
+
+      setBookingOtp(newBookingOtp);
+      setBookingId(data.bookingId);
+      setBookingConfirmed(true);
+
+    } catch (error) {
+
+      console.error("Booking error:", error);
+
+      alert(
+        "Unable to save booking. Please check your internet connection and try again."
+      );
+
+    } finally {
+      setSavingBooking(false);
+    }
   };
 
+
+  // ===============================
+  // BOOKING SUCCESS SCREEN
+  // ===============================
   if (bookingConfirmed) {
     return (
       <div className="booking-page">
-        <div className="booking-success">
-          <div className="success-icon">✅</div>
 
-          <h1>Booking Confirmed!</h1>
+        <div className="booking-success">
+
+          <div className="success-icon">
+            ✅
+          </div>
+
+
+          <h1>
+            Booking Confirmed!
+          </h1>
+
 
           <p>
-  Your {vehicle.name} has been booked successfully.
-</p>
+            Your {vehicle.name} has been booked successfully.
+          </p>
 
-<div className="booking-otp-box">
-  <span>Driver OTP</span>
-  <strong>{bookingOtp}</strong>
-  <small>Share this OTP with the driver</small>
-</div>
+
+          {bookingId && (
+            <p>
+              <strong>Booking ID:</strong> #{bookingId}
+            </p>
+          )}
+
+
+          <div className="booking-otp-box">
+
+            <span>
+              Driver OTP
+            </span>
+
+            <strong>
+              {bookingOtp}
+            </strong>
+
+            <small>
+              Share this OTP with the driver
+            </small>
+
+          </div>
+
 
           <div className="booking-summary">
+
             <p>
               <strong>Pick-up:</strong> {pickup}
             </p>
@@ -124,18 +288,22 @@ setBookingConfirmed(true);
             <p>
               <strong>Distance:</strong> {distance} km
             </p>
+
             <p>
-  <strong>Vehicle:</strong> {vehicle.name}
-</p>
+              <strong>Vehicle:</strong> {vehicle.name}
+            </p>
 
-<p>
-  <strong>Rate:</strong> ₹{vehicle.price_per_km}/km
-</p>
+            <p>
+              <strong>Rate:</strong> ₹
+              {vehicle.price_per_km}/km
+            </p>
 
-<p className="total-price">
-  Total Fare: ₹{totalAmount}
-</p>
- </div>
+            <p className="total-price">
+              Total Fare: ₹{totalAmount}
+            </p>
+
+          </div>
+
 
           <button
             className="back-home-btn"
@@ -145,73 +313,118 @@ setBookingConfirmed(true);
           >
             Back to Home
           </button>
+
         </div>
+
       </div>
     );
   }
 
+
+  // ===============================
+  // BOOKING FORM
+  // ===============================
   return (
     <div className="booking-page">
+
       <div className="booking-container">
 
-        {/* Vehicle */}
+
+        {/* ===============================
+            SELECTED VEHICLE
+        =============================== */}
+
         <div className="selected-vehicle">
+
           <div className="selected-icon">
             {vehicle.icon}
           </div>
 
           <div>
-            <h2>{vehicle.name}</h2>
+
+            <h2>
+              {vehicle.name}
+            </h2>
+
             <p>
-              {vehicle.seats} • {vehicle.fuel} • ₹
-              {vehicle.price}/km
+              {vehicle.seats} Seats • {vehicle.fuel} • ₹
+              {vehicle.price_per_km}/km
             </p>
+
           </div>
+
         </div>
 
-        {/* Booking Form */}
+
+        {/* ===============================
+            BOOKING CARD
+        =============================== */}
+
         <div className="booking-card">
-          <h1>Complete Your Booking</h1>
+
+          <h1>
+            Complete Your Booking
+          </h1>
+
           <p>
             Enter your journey details to continue.
           </p>
 
+
           <form onSubmit={handleBooking}>
+
+
+            {/* PICKUP + DROP */}
 
             <div className="form-row">
 
               <div className="form-group">
-                <label>Pick-up Location</label>
+
+                <label>
+                  Pick-up Location
+                </label>
 
                 <input
                   type="text"
-                  placeholder="Enter pick-up location"
+                  placeholder="e.g. Kolhapur, Maharashtra"
                   value={pickup}
                   onChange={(e) =>
                     setPickup(e.target.value)
                   }
                 />
+
               </div>
 
+
               <div className="form-group">
-                <label>Drop Location</label>
+
+                <label>
+                  Drop Location
+                </label>
 
                 <input
                   type="text"
-                  placeholder="Enter drop location"
+                  placeholder="e.g. Goa, India"
                   value={drop}
                   onChange={(e) =>
                     setDrop(e.target.value)
                   }
                 />
+
               </div>
 
             </div>
 
+
+            {/* DATES */}
+
             <div className="form-row">
 
               <div className="form-group">
-                <label>Pick-up Date</label>
+
+                <label>
+                  Pick-up Date
+                </label>
 
                 <input
                   type="date"
@@ -220,10 +433,15 @@ setBookingConfirmed(true);
                     setPickupDate(e.target.value)
                   }
                 />
+
               </div>
 
+
               <div className="form-group">
-                <label>Return Date</label>
+
+                <label>
+                  Return Date
+                </label>
 
                 <input
                   type="date"
@@ -232,55 +450,105 @@ setBookingConfirmed(true);
                     setReturnDate(e.target.value)
                   }
                 />
+
               </div>
 
             </div>
 
-            <div className="form-group">
-  <label>Distance (KM)</label>
-  <input
-    type="text"
-    value={
-      distance
-        ? `${distance} km`
-        : "Enter pickup and drop location"
-    }
-    readOnly
-  />
-</div>
 
-            {/* Fare */}
+            {/* DISTANCE */}
+
+            <div className="form-group">
+
+              <label>
+                Distance (KM)
+              </label>
+
+              <input
+                type="text"
+                value={
+                  calculatingDistance
+                    ? "Calculating distance..."
+                    : distance
+                    ? `${distance} km`
+                    : "Enter pickup and drop location"
+                }
+                readOnly
+              />
+
+            </div>
+
+
+            {/* FARE */}
+
             <div className="fare-box">
+
               <div>
-                <span>Rate</span>
-                <strong>₹{vehicle.price}/km</strong>
+
+                <span>
+                  Rate
+                </span>
+
+                <strong>
+                  ₹{vehicle.price_per_km}/km
+                </strong>
+
               </div>
 
+
               <div>
-                <span>Distance</span>
+
+                <span>
+                  Distance
+                </span>
+
                 <strong>
                   {distance ? distance : 0} km
                 </strong>
+
               </div>
 
+
               <div className="fare-total">
-                <span>Estimated Fare</span>
-                <strong>₹{totalAmount}</strong>
+
+                <span>
+                  Estimated Fare
+                </span>
+
+                <strong>
+                  ₹{totalAmount}
+                </strong>
+
               </div>
+
             </div>
+
+
+            {/* CONFIRM BUTTON */}
 
             <button
               type="submit"
               className="confirm-booking-btn"
+              disabled={savingBooking || calculatingDistance}
             >
-              Confirm Booking →
+
+              {savingBooking
+                ? "Saving Booking..."
+                : calculatingDistance
+                ? "Calculating Distance..."
+                : "Confirm Booking →"}
+
             </button>
 
           </form>
+
         </div>
+
       </div>
+
     </div>
   );
 }
+
 
 export default Booking;
