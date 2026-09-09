@@ -20,13 +20,15 @@ function Booking() {
     }
 
     try {
-      const response = await fetch(
-        ``https://vehicle-app-1-9q1x.onrender.com/api/distance?pickup=${encodeURIComponent(
-          pickup
-        )}&drop=${encodeURIComponent(drop)}`
-      );
+  const response = await fetch(
+    `https://vehicle-app-1-9q1x.onrender.com/api/distance?pickup=${encodeURIComponent(
+      pickup
+    )}&drop=${encodeURIComponent(drop)}`
+  );
 
-      const data = await response.json();
+  const data = await response.json();
+
+      
 
       if (response.ok) {
         setDistance(data.distanceKm);
