@@ -457,6 +457,39 @@ app.post("/api/bookings", (req, res) => {
     }
   );
 });
+// ===============================
+// CANCEL BOOKING
+// ===============================
+app.put("/api/bookings/:bookingId/cancel", (req, res) => {
+  const { bookingId } = req.params;
+
+  const sql = `
+    UPDATE bookings
+    SET booking_status = 'Cancelled'
+    WHERE id = ?
+      AND booking_status = 'Pending'
+  `;
+
+  db.query(sql, [bookingId], (err, result) => {
+    if (err) {
+      console.error("Cancel booking error:", err);
+
+      return res.status(500).json({
+        message: "Failed to cancel booking"
+      });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(400).json({
+        message: "Booking cannot be cancelled"
+      });
+    }
+
+    res.json({
+      message: "Booking cancelled successfully"
+    });
+  });
+});
 
 // ===============================
 // GET USER BOOKING HISTORY
