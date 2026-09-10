@@ -2,126 +2,125 @@ import "./App.css";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Login from "./Login";
 import Booking from "./Booking";
+import MyBookings from "./MyBookings";
 import { useState } from "react";
+
 function Home() {
   const [vehicles, setVehicles] = useState([
-  {
-    name: "Honda Activa 125",
-    type: "Bike",
-    seats: 1,
-    fuel: "Petrol",
-    price: "₹8/km",
-    price_per_km: 8
-  },
-  {
-    name: "Bajaj RE Auto",
-    type: "Auto",
-    seats: 2,
-    fuel: "CNG",
-    price: "₹10/km",
-    price_per_km: 10
-  },
-  {
-    name: "Maruti Suzuki Swift",
-    type: "Car",
-    seats: 3,
-    fuel: "Petrol",
-    price: "₹14/km",
-    price_per_km: 14
-  },
-  {
-    name: "Hyundai Aura",
-    type: "Cab",
-    seats: 3,
-    fuel: "Petrol",
-    price: "₹16/km",
-    price_per_km: 16
-  },
-  {
-    name: "Hyundai Creta",
-    type: "SUV",
-    seats: 5,
-    fuel: "Petrol",
-    price: "₹20/km",
-    price_per_km: 20
-  },
-  {
-    name: "Toyota Innova HyCross",
-    type: "Luxury",
-    seats: 6,
-    fuel: "Hybrid",
-    price: "₹25/km",
-    price_per_km: 25
-  }
-]);
+    {
+      name: "Honda Activa 125",
+      type: "Bike",
+      seats: 1,
+      fuel: "Petrol",
+      price: "₹8/km",
+      price_per_km: 8
+    },
+    {
+      name: "Bajaj RE Auto",
+      type: "Auto",
+      seats: 2,
+      fuel: "CNG",
+      price: "₹10/km",
+      price_per_km: 10
+    },
+    {
+      name: "Maruti Suzuki Swift",
+      type: "Car",
+      seats: 3,
+      fuel: "Petrol",
+      price: "₹14/km",
+      price_per_km: 14
+    },
+    {
+      name: "Hyundai Aura",
+      type: "Cab",
+      seats: 3,
+      fuel: "Petrol",
+      price: "₹16/km",
+      price_per_km: 16
+    },
+    {
+      name: "Hyundai Creta",
+      type: "SUV",
+      seats: 5,
+      fuel: "Petrol",
+      price: "₹20/km",
+      price_per_km: 20
+    },
+    {
+      name: "Toyota Innova HyCross",
+      type: "Luxury",
+      seats: 6,
+      fuel: "Hybrid",
+      price: "₹25/km",
+      price_per_km: 25
+    }
+  ]);
+
   const [pickup, setPickup] = useState("");
-const [drop, setDrop] = useState("");
-const [pickupDate, setPickupDate] = useState("");
-const [returnDate, setReturnDate] = useState("");
-const [vehicleType, setVehicleType] = useState("");
-const [searchResult, setSearchResult] = useState(null);
-const [searching, setSearching] = useState(false);
-const handleSearch = async () => {
-  if (!pickup || !drop || !pickupDate || !returnDate) {
-    alert("Please select pickup, drop and both dates.");
-    return;
-  }
+  const [drop, setDrop] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
+  const [searchResult, setSearchResult] = useState(null);
+  const [searching, setSearching] = useState(false);
 
-  if (pickup === drop) {
-    alert("Pickup and Drop location cannot be same.");
-    return;
-  }
-
-  try {
-    setSearching(true);
-    const response = await fetch(
-  `https://vehicle-app-1-9q1x.onrender.com/api/distance?pickup=${encodeURIComponent(
-    pickup
-  )}&drop=${encodeURIComponent(drop)}`
-);
-
-    const text = await response.text();
-
-console.log("Server response:", text);
-
-if (!response.ok) {
-  alert("Server error: " + text);
-  return;
-}
-
-const data = JSON.parse(text);
-
-    if (!response.ok) {
-      alert(data.message || "Could not calculate distance.");
+  const handleSearch = async () => {
+    if (!pickup || !drop || !pickupDate || !returnDate) {
+      alert("Please select pickup, drop and both dates.");
       return;
     }
 
-    const selectedVehicle = vehicles.find(
-  (vehicle) => vehicle.type === vehicleType
-);
+    if (pickup === drop) {
+      alert("Pickup and Drop location cannot be same.");
+      return;
+    }
 
-const pricePerKm = selectedVehicle
-  ? Number(selectedVehicle.price_per_km)
-  : 0;
+    try {
+      setSearching(true);
 
-const totalFare = Number(
-  (data.distanceKm * pricePerKm).toFixed(2)
-);
+      const response = await fetch(
+        `https://vehicle-app-1-9q1x.onrender.com/api/distance?pickup=${encodeURIComponent(
+          pickup
+        )}&drop=${encodeURIComponent(drop)}`
+      );
 
-setSearchResult({
-  ...data,
-  vehicleType: vehicleType || "All vehicles",
-  pricePerKm,
-  totalFare
-});
+      const text = await response.text();
 
-  }  catch (error) {
-  console.error("Search error:", error);
-  alert("Unable to calculate distance. Please try again.");
-} finally {
-  setSearching(false);
-}
-};
+      console.log("Server response:", text);
+
+      if (!response.ok) {
+        alert("Server error: " + text);
+        return;
+      }
+
+      const data = JSON.parse(text);
+
+      const selectedVehicle = vehicles.find(
+        (vehicle) => vehicle.type === vehicleType
+      );
+
+      const pricePerKm = selectedVehicle
+        ? Number(selectedVehicle.price_per_km)
+        : 0;
+
+      const totalFare = Number(
+        (data.distanceKm * pricePerKm).toFixed(2)
+      );
+
+      setSearchResult({
+        ...data,
+        vehicleType: vehicleType || "All vehicles",
+        pricePerKm,
+        totalFare
+      });
+    } catch (error) {
+      console.error("Search error:", error);
+      alert("Unable to calculate distance. Please try again.");
+    } finally {
+      setSearching(false);
+    }
+  };
 
   return (
     <div className="app">
@@ -131,15 +130,22 @@ setSearchResult({
       <nav className="navbar">
 
         <div className="logo">
-  <div className="logo-box">
-    <img src="/images/logo.png" alt="VehicleApp Logo" />
-  </div>
+
+          <div className="logo-box">
+            <img
+              src="/images/logo.png"
+              alt="VehicleApp Logo"
+            />
+          </div>
+
           <div>
             Vehicle<span>App</span>
           </div>
+
         </div>
 
         <div className="nav-links">
+
           <a href="#home" className="active">
             Home
           </a>
@@ -159,14 +165,22 @@ setSearchResult({
           <a href="#contact">
             Contact
           </a>
+
+          <Link to="/my-bookings">
+            My Bookings
+          </Link>
+
         </div>
 
         <div className="nav-buttons">
-          <Link to="/login" className="login-btn">
-            Login
-           </Link>
 
-           
+          <Link
+            to="/login"
+            className="login-btn"
+          >
+            Login
+          </Link>
+
         </div>
 
       </nav>
@@ -174,7 +188,10 @@ setSearchResult({
 
       {/* ================= HERO ================= */}
 
-      <section className="hero" id="home">
+      <section
+        className="hero"
+        id="home"
+      >
 
         <div className="hero-content">
 
@@ -197,27 +214,31 @@ setSearchResult({
           <div className="hero-buttons">
 
             <button
-  className="primary-btn"
-  onClick={() => {
-    document.getElementById("vehicles")?.scrollIntoView({
-      behavior: "smooth"
-    });
-  }}
->
-  Explore Vehicles
-  <span>→</span>
-</button>
+              className="primary-btn"
+              onClick={() => {
+                document
+                  .getElementById("vehicles")
+                  ?.scrollIntoView({
+                    behavior: "smooth"
+                  });
+              }}
+            >
+              Explore Vehicles
+              <span>→</span>
+            </button>
 
             <button
-  className="secondary-btn"
-  onClick={() => {
-    document.getElementById("about")?.scrollIntoView({
-      behavior: "smooth"
-    });
-  }}
->
-  ▶ How It Works
-</button>
+              className="secondary-btn"
+              onClick={() => {
+                document
+                  .getElementById("about")
+                  ?.scrollIntoView({
+                    behavior: "smooth"
+                  });
+              }}
+            >
+              ▶ How It Works
+            </button>
 
           </div>
 
@@ -286,147 +307,253 @@ setSearchResult({
       {/* ================= SEARCH ================= */}
 
       <section className="search-section">
-  <div className="search-box">
 
-    {/* Pick-up Location */}
-    <div className="search-item">
-  <div className="search-icon">
-    📍
-  </div>
+        <div className="search-box">
 
-  <div>
-    <label>Pick-up Location</label>
+          {/* Pick-up Location */}
 
-    <input
-      type="text"
-      placeholder="Enter pickup location"
-      value={pickup}
-      onChange={(e) => setPickup(e.target.value)}
-    />
-  </div>
-</div>
+          <div className="search-item">
 
-    {/* Drop Location */}
-    <div className="search-item">
-  <div className="search-icon">
-    📍
-  </div>
+            <div className="search-icon">
+              📍
+            </div>
 
-  <div>
-    <label>Drop Location</label>
+            <div>
 
-    <input
-      type="text"
-      placeholder="Enter drop location"
-      value={drop}
-      onChange={(e) => setDrop(e.target.value)}
-    />
-  </div>
-</div>
+              <label>
+                Pick-up Location
+              </label>
 
-    {/* Pick-up Date */}
-    <div className="search-item">
-  <div className="search-icon">
-    📅
-  </div>
+              <input
+                type="text"
+                placeholder="Enter pickup location"
+                value={pickup}
+                onChange={(e) =>
+                  setPickup(e.target.value)
+                }
+              />
 
-  <div>
-    <label>Pick-up Date</label>
+            </div>
 
-    <input
-      type="date"
-      value={pickupDate}
-      onChange={(e) => setPickupDate(e.target.value)}
-    />
-  </div>
-</div>
+          </div>
 
-    {/* Return Date */}
-    <div className="search-item">
-  <div className="search-icon">
-    📅
-  </div>
 
-  <div>
-    <label>Return Date</label>
+          {/* Drop Location */}
 
-    <input
-      type="date"
-      value={returnDate}
-      onChange={(e) => setReturnDate(e.target.value)}
-    />
-  </div>
-</div>
+          <div className="search-item">
 
-    {/* Vehicle Type */}
-    <div className="search-item">
-  <div className="search-icon">
-    🚘
-  </div>
+            <div className="search-icon">
+              📍
+            </div>
 
-  <div>
-    <label>Vehicle Type</label>
+            <div>
 
-    <select
-      value={vehicleType}
-      onChange={(e) => setVehicleType(e.target.value)}
-    >
-      <option value="">All vehicles</option>
-      <option value="Bike">Bike</option>
-      <option value="Auto">Auto</option>
-      <option value="Car">Car</option>
-      <option value="Cab">Cab</option>
-      <option value="SUV">SUV</option>
-      <option value="Luxury">Luxury</option>
-    </select>
-  </div>
-</div>
+              <label>
+                Drop Location
+              </label>
 
-    {/* Search Button */}
-    <button className="search-btn" onClick={handleSearch}>
-  {searching ? "Searching..." : "Search"}
-  {!searching && <span>🔍</span>}
-</button>
+              <input
+                type="text"
+                placeholder="Enter drop location"
+                value={drop}
+                onChange={(e) =>
+                  setDrop(e.target.value)
+                }
+              />
 
-  </div>
-</section>
-{searchResult && (
-  <div className="search-result">
-    <h3>Trip Details</h3>
+            </div>
 
-    <p>
-      <strong>Pickup:</strong> {searchResult.pickup}
-    </p>
+          </div>
 
-    <p>
-      <strong>Drop:</strong> {searchResult.drop}
-    </p>
 
-    <p>
-      <strong>Distance:</strong> {searchResult.distanceKm} km
-    </p>
+          {/* Pick-up Date */}
 
-    <p>
-      <strong>Vehicle:</strong> {searchResult.vehicleType}
-    </p>
+          <div className="search-item">
 
-    <p>
-      <strong>Rate:</strong> ₹{searchResult.pricePerKm}/km
-    </p>
+            <div className="search-icon">
+              📅
+            </div>
 
-    <p>
-      <strong>Total Fare:</strong> ₹{searchResult.totalFare}
-    </p>
-  </div>
-)}
+            <div>
+
+              <label>
+                Pick-up Date
+              </label>
+
+              <input
+                type="date"
+                value={pickupDate}
+                onChange={(e) =>
+                  setPickupDate(e.target.value)
+                }
+              />
+
+            </div>
+
+          </div>
+
+
+          {/* Return Date */}
+
+          <div className="search-item">
+
+            <div className="search-icon">
+              📅
+            </div>
+
+            <div>
+
+              <label>
+                Return Date
+              </label>
+
+              <input
+                type="date"
+                value={returnDate}
+                onChange={(e) =>
+                  setReturnDate(e.target.value)
+                }
+              />
+
+            </div>
+
+          </div>
+
+
+          {/* Vehicle Type */}
+
+          <div className="search-item">
+
+            <div className="search-icon">
+              🚘
+            </div>
+
+            <div>
+
+              <label>
+                Vehicle Type
+              </label>
+
+              <select
+                value={vehicleType}
+                onChange={(e) =>
+                  setVehicleType(e.target.value)
+                }
+              >
+
+                <option value="">
+                  All vehicles
+                </option>
+
+                <option value="Bike">
+                  Bike
+                </option>
+
+                <option value="Auto">
+                  Auto
+                </option>
+
+                <option value="Car">
+                  Car
+                </option>
+
+                <option value="Cab">
+                  Cab
+                </option>
+
+                <option value="SUV">
+                  SUV
+                </option>
+
+                <option value="Luxury">
+                  Luxury
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+
+          {/* Search Button */}
+
+          <button
+            className="search-btn"
+            onClick={handleSearch}
+          >
+
+            {searching
+              ? "Searching..."
+              : "Search"}
+
+            {!searching && (
+              <span>🔍</span>
+            )}
+
+          </button>
+
+        </div>
+
+      </section>
+
+
+      {/* ================= SEARCH RESULT ================= */}
+
+      {searchResult && (
+
+        <div className="search-result">
+
+          <h3>
+            Trip Details
+          </h3>
+
+          <p>
+            <strong>Pickup:</strong>{" "}
+            {searchResult.pickup}
+          </p>
+
+          <p>
+            <strong>Drop:</strong>{" "}
+            {searchResult.drop}
+          </p>
+
+          <p>
+            <strong>Distance:</strong>{" "}
+            {searchResult.distanceKm} km
+          </p>
+
+          <p>
+            <strong>Vehicle:</strong>{" "}
+            {searchResult.vehicleType}
+          </p>
+
+          <p>
+            <strong>Rate:</strong>{" "}
+            ₹{searchResult.pricePerKm}/km
+          </p>
+
+          <p>
+            <strong>Total Fare:</strong>{" "}
+            ₹{searchResult.totalFare}
+          </p>
+
+        </div>
+
+      )}
+
 
       {/* ================= VEHICLE CATEGORIES ================= */}
 
-      <section className="section" id="services">
+      <section
+        className="section"
+        id="services"
+      >
 
         <div className="section-header">
 
           <div>
+
             <span className="section-label">
               VEHICLE CATEGORIES
             </span>
@@ -438,6 +565,7 @@ setSearchResult({
             <p>
               Select the vehicle that matches your journey.
             </p>
+
           </div>
 
           <button className="view-all-btn">
@@ -453,64 +581,47 @@ setSearchResult({
             <div className="category-icon">
               🚗
             </div>
-
             <h3>Cars</h3>
-
             <p>120+ Vehicles</p>
           </div>
-
 
           <div className="category-card">
             <div className="category-icon">
               🏍️
             </div>
-
             <h3>Bikes</h3>
-
             <p>80+ Vehicles</p>
           </div>
-
 
           <div className="category-card">
             <div className="category-icon">
               🛺
             </div>
-
             <h3>Auto</h3>
-
             <p>40+ Vehicles</p>
           </div>
-
 
           <div className="category-card">
             <div className="category-icon">
               🚕
             </div>
-
             <h3>Cabs</h3>
-
             <p>60+ Vehicles</p>
           </div>
-
 
           <div className="category-card">
             <div className="category-icon">
               🚙
             </div>
-
             <h3>SUVs</h3>
-
             <p>50+ Vehicles</p>
           </div>
-
 
           <div className="category-card">
             <div className="category-icon">
               🚐
             </div>
-
             <h3>Luxury</h3>
-
             <p>30+ Vehicles</p>
           </div>
 
@@ -521,11 +632,15 @@ setSearchResult({
 
       {/* ================= FEATURED VEHICLES ================= */}
 
-      <section className="vehicles-section" id="vehicles">
+      <section
+        className="vehicles-section"
+        id="vehicles"
+      >
 
         <div className="section-header">
 
           <div>
+
             <span className="section-label">
               POPULAR VEHICLES
             </span>
@@ -537,18 +652,21 @@ setSearchResult({
             <p>
               Well-maintained vehicles ready for your next trip.
             </p>
+
           </div>
 
           <button
-  className="view-all-btn"
-  onClick={() => {
-    document.getElementById("vehicles")?.scrollIntoView({
-      behavior: "smooth"
-    });
-  }}
->
-  View All Vehicles →
-</button>
+            className="view-all-btn"
+            onClick={() => {
+              document
+                .getElementById("vehicles")
+                ?.scrollIntoView({
+                  behavior: "smooth"
+                });
+            }}
+          >
+            View All Vehicles →
+          </button>
 
         </div>
 
@@ -557,7 +675,10 @@ setSearchResult({
 
           {vehicles.map((vehicle, index) => (
 
-            <div className="vehicle-card" key={index}>
+            <div
+              className="vehicle-card"
+              key={index}
+            >
 
               <div className="vehicle-image">
 
@@ -570,30 +691,50 @@ setSearchResult({
                 </button>
 
                 <div className="vehicle-icon-large">
-  {vehicle.type === "Bike" && (
-    <img src="/images/bike.jpeg" alt="Honda Activa" />
-  )}
 
-  {vehicle.type === "Auto" && (
-    <img src="/images/auto.jpeg" alt="Bajaj RE Auto" />
-  )}
+                  {vehicle.type === "Bike" && (
+                    <img
+                      src="/images/bike.jpeg"
+                      alt="Honda Activa"
+                    />
+                  )}
 
-  {vehicle.type === "Car" && (
-    <img src="/images/car.jpeg" alt="Maruti Suzuki Swift" />
-  )}
+                  {vehicle.type === "Auto" && (
+                    <img
+                      src="/images/auto.jpeg"
+                      alt="Bajaj RE Auto"
+                    />
+                  )}
 
-  {vehicle.type === "Cab" && (
-    <img src="/images/cab.jpeg" alt="Hyundai Aura" />
-  )}
+                  {vehicle.type === "Car" && (
+                    <img
+                      src="/images/car.jpeg"
+                      alt="Maruti Suzuki Swift"
+                    />
+                  )}
 
-  {vehicle.type === "SUV" && (
-    <img src="/images/suv.jpeg" alt="Hyundai Creta" />
-  )}
+                  {vehicle.type === "Cab" && (
+                    <img
+                      src="/images/cab.jpeg"
+                      alt="Hyundai Aura"
+                    />
+                  )}
 
-  {vehicle.type === "Luxury" && (
-    <img src="/images/luxury.jpeg" alt="Toyota Innova HyCross" />
-  )}
-</div>
+                  {vehicle.type === "SUV" && (
+                    <img
+                      src="/images/suv.jpeg"
+                      alt="Hyundai Creta"
+                    />
+                  )}
+
+                  {vehicle.type === "Luxury" && (
+                    <img
+                      src="/images/luxury.jpeg"
+                      alt="Toyota Innova HyCross"
+                    />
+                  )}
+
+                </div>
 
               </div>
 
@@ -634,17 +775,15 @@ setSearchResult({
                       {vehicle.price}
                     </strong>
 
-                  
-
                   </div>
 
                   <Link
-  to="/booking"
-  state={{ vehicle }}
-  className="rent-btn"
->
-  Rent Now
-</Link>
+                    to="/booking"
+                    state={{ vehicle }}
+                    className="rent-btn"
+                  >
+                    Rent Now
+                  </Link>
 
                 </div>
 
@@ -661,7 +800,10 @@ setSearchResult({
 
       {/* ================= WHY CHOOSE US ================= */}
 
-      <section className="about-section" id="about">
+      <section
+        className="about-section"
+        id="about"
+      >
 
         <div className="about-content">
 
@@ -676,9 +818,9 @@ setSearchResult({
           </h2>
 
           <p>
-            Vehicle App makes vehicle rental simple, transparent
-            and convenient. Choose your vehicle, select your
-            dates and start your journey.
+            Vehicle App makes vehicle rental simple,
+            transparent and convenient. Choose your
+            vehicle, select your dates and start your journey.
           </p>
 
           <button className="primary-btn">
@@ -768,7 +910,10 @@ setSearchResult({
 
       {/* ================= CALL TO ACTION ================= */}
 
-      <section className="cta-section" id="contact">
+      <section
+        className="cta-section"
+        id="contact"
+      >
 
         <div>
 
@@ -786,9 +931,12 @@ setSearchResult({
 
         </div>
 
-        <Link to="/booking" className="cta-btn">
-  Start Booking →
-</Link>
+        <Link
+          to="/booking"
+          className="cta-btn"
+        >
+          Start Booking →
+        </Link>
 
       </section>
 
@@ -819,9 +967,17 @@ setSearchResult({
               Company
             </h4>
 
-            <a href="#about">About Us</a>
-            <a href="#contact">Contact</a>
-            <a href="#home">Home</a>
+            <a href="#about">
+              About Us
+            </a>
+
+            <a href="#contact">
+              Contact
+            </a>
+
+            <a href="#home">
+              Home
+            </a>
 
           </div>
 
@@ -832,9 +988,17 @@ setSearchResult({
               Vehicles
             </h4>
 
-            <a href="#vehicles">Cars</a>
-            <a href="#vehicles">Bikes</a>
-            <a href="#vehicles">Auto & Cabs</a>
+            <a href="#vehicles">
+              Cars
+            </a>
+
+            <a href="#vehicles">
+              Bikes
+            </a>
+
+            <a href="#vehicles">
+              Auto & Cabs
+            </a>
 
           </div>
 
@@ -845,9 +1009,17 @@ setSearchResult({
               Support
             </h4>
 
-            <a href="#contact">Help Center</a>
-            <a href="#contact">Contact Support</a>
-            <a href="#contact">Terms & Conditions</a>
+            <a href="#contact">
+              Help Center
+            </a>
+
+            <a href="#contact">
+              Contact Support
+            </a>
+
+            <a href="#contact">
+              Terms & Conditions
+            </a>
 
           </div>
 
@@ -876,12 +1048,31 @@ setSearchResult({
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/booking" element={<Booking />} />
-        
+
+        <Route
+          path="/"
+          element={<Home />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/booking"
+          element={<Booking />}
+        />
+
+        <Route
+          path="/my-bookings"
+          element={<MyBookings />}
+        />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
